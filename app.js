@@ -3,7 +3,6 @@ const path = require("path");
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const cors = require("cors");
-const twilio = require("twilio");
 
 const app = express();
 app.use(express.urlencoded());
