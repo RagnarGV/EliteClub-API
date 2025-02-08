@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Schedule {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  day         String
+  time        String
+  games       Game[]
+  description String
+}
+
+model Game {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  type       String
+  limit      String
+  Schedule   Schedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId String?   @db.ObjectId
+}
+
+model Gallery {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  image       String
+}
+
+model Waitlist {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastInitial String
+  phone       String
+  gameType    Boolean
+  smsUpdates  Boolean
+  checkedIn   Boolean @default(false)
+}
+
+model User {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastInitial String
+  phone       String @unique
+}
