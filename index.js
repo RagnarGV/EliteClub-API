@@ -3,7 +3,6 @@ const path = require("path");
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const cors = require("cors");
-const morgan = require("morgan");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,7 +11,6 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
 
 app.use(express.static(path.join(__dirname, "public"))); // Serve static files (if you have a 'public' folder)
 
