@@ -59,7 +59,7 @@ app.post("/api/gallery", upload.single("image"), async (req, res) => {
     return res.status(400).json({ error: "No image uploaded" });
   }
   const image = `${serverUrl}/uploads/${req.file.filename}`;
-
+  console.log(image);
   try {
     const newGalleryItem = await prisma.gallery.create({
       data: { title, description, image },
