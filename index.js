@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public"))); // Serve static files (if you have a 'public' folder)
-
+const serverUrl = "https://eliteclub-api.onrender.com";
 // Ensure 'uploads' directory exists
 const uploadsDir = path.join(__dirname, "uploads");
 const fs = require("fs"); // Import the file system module
@@ -58,7 +58,7 @@ app.post("/api/gallery", upload.single("image"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No image uploaded" });
   }
-  const image = `/uploads/${req.file.filename}`;
+  const image = `${serverUrl}/uploads/${req.file.filename}`;
 
   try {
     const newGalleryItem = await prisma.gallery.create({
