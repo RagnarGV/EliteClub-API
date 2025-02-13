@@ -51,4 +51,5 @@ model User {
   firstName   String
   lastInitial String
   phone       String @unique
+  smsUpdates  Boolean
 }
