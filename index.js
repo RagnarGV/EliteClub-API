@@ -247,6 +247,22 @@ app.get("/api/verify/:phone", async (req, res) => {
     res.json({ user: true });
   }
 });
+
+app.post("/api/users", async (req, res) => {
+  try {
+    const { firstName, lastInitial, phone, smsUpdates } = req.body;
+    const user = await prisma.user.create({
+      firstName: firstName,
+      lastInitial: lastInitial,
+      phone: phone,
+      smsUpdates: smsUpdates,
+    });
+    res.status(201).json({ message: "User saved successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error saving user", error });
+  }
+});
+
 // Start Server
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
