@@ -252,10 +252,12 @@ app.post("/api/users", async (req, res) => {
   try {
     const { firstName, lastInitial, phone, smsUpdates } = req.body;
     const user = await prisma.user.create({
-      firstName: firstName,
-      lastInitial: lastInitial,
-      phone: phone,
-      smsUpdates: smsUpdates,
+      data: {
+        firstName: firstName,
+        lastInitial: lastInitial,
+        phone: phone,
+        smsUpdates: smsUpdates,
+      },
     });
     res.status(201).json({ message: "User saved successfully" });
   } catch (error) {
