@@ -235,7 +235,18 @@ app.post("/api/waitlist", async (req, res) => {
 });
 
 // ... (Verification routes - these need careful review and probably a proper SMS service integration)
+app.get("/api/verify/:phone", async (req, res) => {
+  const { phone } = req.params;
 
+  const user = await prisma.user.findUnique({
+    where: { phone },
+  });
+  if (!user) {
+    res.json({ user: false });
+  } else {
+    res.json({ user: true });
+  }
+});
 // Start Server
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
