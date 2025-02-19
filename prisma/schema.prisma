@@ -53,3 +53,10 @@ model User {
   phone       String  @unique
   smsUpdates  Boolean
 }
+
+model AdminUser {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String @unique
+  password String
+}

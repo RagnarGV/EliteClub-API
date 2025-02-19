@@ -1,10 +1,15 @@
 const multer = require("multer");
 const path = require("path");
+require("dotenv").config();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const cors = require("cors");
 
 const app = express();
+const JWT_KEY = process.env.JWT_KEY;
 const port = process.env.PORT || 3000;
 const prisma = new PrismaClient();
 
@@ -40,6 +45,74 @@ const upload = multer({ storage });
 
 app.get("/", (req, res) => {
   res.send("Hello");
+});
+// Login and Register Routes
+
+app.post("/api/register", async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { name, email, password } = req.body;
+
+  try {
+    // Check if user already exists
+    let user = await prisma.adminUser.findUnique({ where: { email } });
+    if (user) return res.status(400).json({ message: "User already exists" });
+
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    user = await prisma.adminUser.create({
+      data: { name, email, password: hashedPassword },
+    });
+
+    // Create JWT token
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_KEY, {
+      expiresIn: "1h",
+    });
+
+    // Respond with token and user data
+    res.status(201).json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+});
+
+// LOGIN ROUTE
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Find user by email
+    let user = await prisma.adminUser.findUnique({ where: { email } });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+    // Compare the provided password with the hashed one in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials" });
+
+    // Create JWT token
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_KEY, {
+      expiresIn: "1h",
+    });
+
+    // Respond with token and user data
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    res.status(500).json({ error: "Failed to login user" });
+  }
 });
 
 // Gallery Routes
@@ -222,8 +295,8 @@ app.post("/api/waitlist", async (req, res) => {
         firstName,
         lastInitial,
         phone,
-        gameType,
-        smsUpdates,
+        gameType: false,
+        smsUpdates: false,
         checkedIn: false,
       },
     });
@@ -231,6 +304,39 @@ app.post("/api/waitlist", async (req, res) => {
   } catch (error) {
     console.error("Error adding to waitlist:", error);
     res.status(500).json({ error: "Failed to add to waitlist" });
+  }
+});
+
+app.put("/api/waitlist/:id", async (req, res) => {
+  const { id } = req.params;
+  const { firstName, lastInitial, phone, gameType, smsUpdates } = req.body;
+  try {
+    const newEntry = await prisma.waitlist.update({
+      where: { id },
+      data: {
+        firstName,
+        lastInitial,
+        phone,
+        gameType: false,
+        smsUpdates: false,
+        checkedIn: false,
+      },
+    });
+    res.status(201).json(newEntry);
+  } catch (error) {
+    console.error("Error updating to waitlist:", error);
+    res.status(500).json({ error: "Failed to update to waitlist" });
+  }
+});
+
+app.delete("/api/waitlist/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.waitlist.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting waitlist item:", error);
+    res.status(500).json({ error: "Failed to delete waitlist item" });
   }
 });
 
