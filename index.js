@@ -290,6 +290,15 @@ app.get("/api/waitlist", async (req, res) => {
 app.post("/api/waitlist", async (req, res) => {
   const { firstName, lastInitial, phone, gameType, smsUpdates } = req.body;
   try {
+    const existingEntry = await prisma.waitlist.findFirst({
+      where: { phone },
+    });
+
+    if (existingEntry) {
+      return res
+        .status(400)
+        .json({ error: "Phone number already exists in the waitlist" });
+    }
     const newEntry = await prisma.waitlist.create({
       data: {
         firstName,
