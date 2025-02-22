@@ -30,18 +30,32 @@ if (!fs.existsSync(uploadsDir)) {
 cron.schedule("* * * * *", async () => {
   console.log("Running cron job to delete old users...");
 
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
   try {
-    const result = await prisma.user.deleteMany({
+    // Calculate timestamp for 1 hour ago
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+    // Delete users created more than 1 hour ago
+    const result = await prisma.waitlist.deleteMany({
       where: {
-        createdAt: { lt: oneHourAgo },
+        createdAt: {
+          lte: oneHourAgo, // Less than or equal to one hour ago
+        },
+        checkedIn: false,
       },
     });
 
-    console.log(`Deleted ${result.count} users`);
+    if (result.count > 0) {
+      console.log(
+        `Successfully deleted ${
+          result.count
+        } users created before ${oneHourAgo.toISOString()}`
+      );
+    } else {
+      console.log("No users found to delete");
+    }
   } catch (error) {
-    console.error("Error deleting users:", error);
+    console.error("Error deleting old users:", error);
   }
 });
 const storage = multer.diskStorage({
@@ -366,6 +380,20 @@ app.delete("/api/waitlist/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting waitlist item:", error);
     res.status(500).json({ error: "Failed to delete waitlist item" });
+  }
+});
+
+app.put("/api/waitlist/checkin/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const waitlistItem = await prisma.waitlist.update({
+      where: { id },
+      data: { checkedIn: true },
+    });
+    res.json(waitlistItem);
+  } catch (error) {
+    console.error("Error checking in waitlist item:", error);
+    res.status(500).json({ error: "Failed to check in waitlist item" });
   }
 });
 
