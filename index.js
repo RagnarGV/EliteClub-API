@@ -1,4 +1,5 @@
 const multer = require("multer");
+const cron = require("node-cron");
 const path = require("path");
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
@@ -18,14 +19,31 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public"))); // Serve static files (if you have a 'public' folder)
-const serverUrl = "https://eliteclub-api.onrender.com";
+//const serverUrl = "https://eliteclub-api.onrender.com";
+const serverUrl = "http://localhost:3000";
 // Ensure 'uploads' directory exists
 const uploadsDir = path.join(__dirname, "uploads");
 const fs = require("fs"); // Import the file system module
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
+cron.schedule("* * * * *", async () => {
+  console.log("Running cron job to delete old users...");
 
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  try {
+    const result = await prisma.user.deleteMany({
+      where: {
+        createdAt: { lt: oneHourAgo },
+      },
+    });
+
+    console.log(`Deleted ${result.count} users`);
+  } catch (error) {
+    console.error("Error deleting users:", error);
+  }
+});
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadsDir); // Use the 'uploadsDir' variable
@@ -290,29 +308,31 @@ app.get("/api/waitlist", async (req, res) => {
 app.post("/api/waitlist", async (req, res) => {
   const { firstName, lastInitial, phone, gameType, smsUpdates } = req.body;
   try {
-    const existingEntry = await prisma.waitlist.findFirst({
+    const existingEntry = await prisma.waitlist.findUnique({
       where: { phone },
     });
-
+    console.log(existingEntry + "existingEntry");
     if (existingEntry) {
       return res
         .status(400)
         .json({ error: "Phone number already exists in the waitlist" });
     }
+
     const newEntry = await prisma.waitlist.create({
       data: {
-        firstName,
-        lastInitial,
-        phone,
-        gameType: false,
-        smsUpdates: false,
+        firstName: firstName.trim(),
+        lastInitial: lastInitial.trim().toUpperCase(),
+        phone: phone,
+        gameType: gameType ?? false,
+        smsUpdates: smsUpdates ?? false,
         checkedIn: false,
       },
     });
+
     res.status(201).json(newEntry);
   } catch (error) {
     console.error("Error adding to waitlist:", error);
-    res.status(500).json({ error: "Failed to add to waitlist" });
+    res.status(500).json({ error: error.message });
   }
 });
 

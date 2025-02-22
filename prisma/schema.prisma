@@ -37,21 +37,23 @@ model Gallery {
 }
 
 model Waitlist {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName   String
   lastInitial String
-  phone       String
+  phone       String   @unique
   gameType    Boolean
   smsUpdates  Boolean
-  checkedIn   Boolean @default(false)
+  checkedIn   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model User {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName   String
   lastInitial String
-  phone       String  @unique
+  phone       String   @unique
   smsUpdates  Boolean
+  createdAt   DateTime @default(now())
 }
 
 model AdminUser {
