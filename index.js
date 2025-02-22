@@ -14,13 +14,18 @@ const JWT_KEY = process.env.JWT_KEY;
 const port = process.env.PORT || 3000;
 const prisma = new PrismaClient();
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const verificationService = process.env.TWILIO_VERIFY_SERVICE_SID;
+const client = require("twilio")(accountSid, authToken);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public"))); // Serve static files (if you have a 'public' folder)
-//const serverUrl = "https://eliteclub-api.onrender.com";
-const serverUrl = "http://localhost:3000";
+const serverUrl = "https://eliteclub-api.onrender.com";
+//const serverUrl = "http://localhost:3000";
 // Ensure 'uploads' directory exists
 const uploadsDir = path.join(__dirname, "uploads");
 const fs = require("fs"); // Import the file system module
@@ -428,7 +433,39 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
-// Start Server
+app.post("/api/send-otp", async (req, res) => {
+  const { phoneNumber } = req.body;
+  console.log(phoneNumber);
+  try {
+    await client.verify.v2
+      .services(verificationService)
+      .verifications.create({ to: `${phoneNumber}`, channel: "sms" });
+    res.json({ success: true, message: "OTP Sent" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send OTP", error });
+  }
+});
+
+app.post("/api/verify-otp", async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+  try {
+    const verification = await client.verify.v2
+      .services(verificationService)
+      .verificationChecks.create({ to: `${phoneNumber}`, code: otp });
+
+    if (verification.status === "approved") {
+      res.json({ success: true, message: "OTP Verified" });
+    } else {
+      res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "OTP verification failed", error });
+  }
+});
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
