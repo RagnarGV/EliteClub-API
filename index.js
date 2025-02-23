@@ -466,6 +466,48 @@ app.post("/api/verify-otp", async (req, res) => {
       .json({ success: false, message: "OTP verification failed", error });
   }
 });
+app.post("/api/game", async (req, res) => {
+  const { type, limit } = req.body;
+  try {
+    const newGame = await prisma.games.create({
+      data: { type, limit },
+    });
+    res.status(201).json(newGame);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to add game", error });
+  }
+});
+app.get("/api/game", async (req, res) => {
+  try {
+    const games = await prisma.games.findMany();
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get games" });
+  }
+});
+app.put("/api/game/:id", async (req, res) => {
+  const { id } = req.params;
+  const { type, limit } = req.body;
+  try {
+    const updatedGame = await prisma.games.update({
+      where: { id },
+      data: { type, limit },
+    });
+    res.json(updatedGame);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update game", error });
+  }
+});
+app.delete("/api/game/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.games.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete game" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
