@@ -41,7 +41,7 @@ model Waitlist {
   firstName   String
   lastInitial String
   phone       String   @unique
-  gameType    Boolean
+  gameType    String
   smsUpdates  Boolean
   checkedIn   Boolean  @default(false)
   createdAt   DateTime @default(now())
