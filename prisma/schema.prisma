@@ -68,3 +68,10 @@ model Games {
   type  String
   limit String
 }
+
+model Review {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  review String
+  rating Int
+}

@@ -508,6 +508,48 @@ app.delete("/api/game/:id", async (req, res) => {
   }
 });
 
+app.post("/api/reviews", async (req, res) => {
+  const { name, review, rating } = req.body;
+  try {
+    const newReview = await prisma.review.create({
+      data: { name, review, rating },
+    });
+    res.status(201).json(newReview);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to add review", error });
+  }
+});
+app.get("/api/reviews", async (req, res) => {
+  try {
+    const reviews = await prisma.review.findMany();
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get reviews" });
+  }
+});
+app.put("/api/reviews/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, review, rating } = req.body;
+  try {
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: { name, review, rating },
+    });
+    res.json(updatedReview);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update review", error });
+  }
+});
+app.delete("/api/reviews/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.review.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
